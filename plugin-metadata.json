@@ -1,5 +1,5 @@
 {
     "name": "OrdersPlugin",
-    "version": "1.0.0",
+    "version": "v1.0.0",
     "description": "A plugin to manage customer orders."
 }
