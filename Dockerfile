@@ -1,24 +1,32 @@
-# Dockerfile for Production
+# Stage 1: Build
+FROM node:18-alpine AS builder
 
-# ---- Base Stage ----
-FROM node:22-alpine AS base
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# ---- Dependencies Stage ----
-FROM base AS dependencies
-COPY package.json package-lock.json ./
-RUN npm install --omit=dev
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install
 
-# ---- Build Stage ----
-FROM dependencies AS build
+# Copy source code
 COPY . .
+
+# Build the NestJS app
 RUN npm run build
 
-# ---- Production Stage ----
-FROM base AS production
-COPY --from=dependencies /usr/src/app/node_modules ./node_modules
-COPY --from=build /usr/src/app/dist ./dist
-COPY package.json .
+# Stage 2: Run
+FROM node:18-alpine
 
+WORKDIR /app
+
+# Copy only production dependencies
+COPY package*.json ./
+RUN npm install --production
+
+# Copy built app from builder stage
+COPY --from=builder /app/dist ./dist
+
+# Expose the port your app runs on (default 3000)
 EXPOSE 3000
-CMD [ "npm", "run", "start:prod" ]
+
+# Start the app
+CMD ["node", "dist/main.js"]
